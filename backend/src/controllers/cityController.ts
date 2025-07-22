@@ -62,7 +62,7 @@ export class CityController {
   /**
    * Get city by ID
    */
-  getCityById = asyncHandler(async (req: Request, res: Response) => {
+  getCityById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
     const city = await prisma.city.findUnique({
@@ -95,10 +95,11 @@ export class CityController {
     });
 
     if (!city) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'City not found'
       });
+      return;
     }
 
     res.json({
@@ -110,7 +111,7 @@ export class CityController {
   /**
    * Create new city
    */
-  createCity = asyncHandler(async (req: AuthRequest, res: Response) => {
+  createCity = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { name, state, country, latitude, longitude } = req.body;
 
     // Check if city already exists
@@ -122,10 +123,11 @@ export class CityController {
     });
 
     if (existingCity) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'City already exists in this state'
       });
+      return;
     }
 
     const city = await prisma.city.create({
@@ -150,17 +152,18 @@ export class CityController {
   /**
    * Update city
    */
-  updateCity = asyncHandler(async (req: AuthRequest, res: Response) => {
+  updateCity = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     const { name, state, country, latitude, longitude, is_active } = req.body;
 
     const city = await prisma.city.findUnique({ where: { id } });
 
     if (!city) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'City not found'
       });
+      return;
     }
 
     const updatedCity = await prisma.city.update({
@@ -187,7 +190,7 @@ export class CityController {
   /**
    * Delete city
    */
-  deleteCity = asyncHandler(async (req: AuthRequest, res: Response) => {
+  deleteCity = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
 
     const city = await prisma.city.findUnique({
@@ -203,18 +206,20 @@ export class CityController {
     });
 
     if (!city) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'City not found'
       });
+      return;
     }
 
     // Check if city has associated hospitals or blood banks
     if (city._count.hospitals > 0 || city._count.blood_banks > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Cannot delete city with associated hospitals or blood banks'
       });
+      return;
     }
 
     await prisma.city.delete({ where: { id } });

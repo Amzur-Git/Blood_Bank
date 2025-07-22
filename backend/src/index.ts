@@ -55,7 +55,7 @@ const emergencyLimiter = rateLimit({
 });
 app.use('/api/emergency/', emergencyLimiter);
 
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
+app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim()) } }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

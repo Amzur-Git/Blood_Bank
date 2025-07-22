@@ -79,7 +79,7 @@ export class BloodAvailabilityService {
         where: whereClause,
         include: {
           blood_inventory: {
-            where: blood_type ? { blood_type: blood_type } : undefined,
+            where: blood_type ? { blood_type: blood_type as any } : undefined,
             orderBy: { last_updated: 'desc' }
           },
           hospital: {

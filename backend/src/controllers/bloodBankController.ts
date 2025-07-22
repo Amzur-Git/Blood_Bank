@@ -72,11 +72,11 @@ export class BloodBankController {
   /**
    * Get blood bank by ID
    */
-  getBloodBankById = asyncHandler(async (req: Request, res: Response) => {
+  getBloodBankById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
-
+    
     const bloodBank = await prisma.bloodBank.findUnique({
-      where: { id },
+      where: { id: id as string },
       include: {
         city: true,
         hospital: true,
@@ -85,10 +85,11 @@ export class BloodBankController {
     });
 
     if (!bloodBank) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood bank not found'
       });
+      return;
     }
 
     res.json({
@@ -126,23 +127,24 @@ export class BloodBankController {
   /**
    * Update blood bank
    */
-  updateBloodBank = asyncHandler(async (req: AuthRequest, res: Response) => {
+  updateBloodBank = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     const updateData = req.body;
-
+    
     const existingBloodBank = await prisma.bloodBank.findUnique({
-      where: { id }
+      where: { id: id as string }
     });
 
     if (!existingBloodBank) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood bank not found'
       });
+      return;
     }
 
     const bloodBank = await prisma.bloodBank.update({
-      where: { id },
+      where: { id: id as string },
       data: {
         ...updateData,
         updated_by: req.user?.id
@@ -165,11 +167,11 @@ export class BloodBankController {
   /**
    * Delete blood bank
    */
-  deleteBloodBank = asyncHandler(async (req: AuthRequest, res: Response) => {
+  deleteBloodBank = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
-
+    
     const bloodBank = await prisma.bloodBank.findUnique({
-      where: { id },
+      where: { id: id as string },
       include: {
         _count: {
           select: {
@@ -180,21 +182,23 @@ export class BloodBankController {
     });
 
     if (!bloodBank) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood bank not found'
       });
+      return;
     }
 
     // Check if blood bank has associated inventory
     if (bloodBank._count.blood_inventory > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Cannot delete blood bank with existing inventory. Please clear inventory first.'
       });
+      return;
     }
 
-    await prisma.bloodBank.delete({ where: { id } });
+    await prisma.bloodBank.delete({ where: { id: id as string } });
 
     logger.info(`Blood bank deleted: ${id} by user ${req.user?.id}`);
 

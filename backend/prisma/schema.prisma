@@ -48,6 +48,7 @@ model Hospital {
   city         City         @relation(fields: [city_id], references: [id])
   blood_banks  BloodBank[]
   doctors      Doctor[]
+  users        User[]       // Doctors working at this hospital
   
   @@map("hospitals")
 }
@@ -137,37 +138,53 @@ model Patient {
 
 model BloodRequest {
   id               String        @id @default(cuid())
-  patient_id       String
-  doctor_id        String?
-  blood_bank_id    String
-  blood_type       BloodType
-  units_needed     Int
-  urgency_level    UrgencyLevel  @default(MEDIUM)
+  patientId        String
+  doctorId         String?
+  bloodBankId      String
+  bloodType        BloodType
+  quantity         Int
+  urgency          UrgencyLevel  @default(MEDIUM)
   status           RequestStatus @default(PENDING)
-  reason           String
-  requested_at     DateTime      @default(now())
-  approved_at      DateTime?
-  fulfilled_at     DateTime?
-  approved_by      String?
+  medicalReason    String
   notes            String?
+  requiredDate     DateTime?
+  createdAt        DateTime      @default(now())
+  fulfilledAt      DateTime?
+  fulfillmentNotes String?
   
   // Relations
-  patient          Patient       @relation(fields: [patient_id], references: [id])
-  doctor           Doctor?       @relation(fields: [doctor_id], references: [id])
-  blood_bank       BloodBank     @relation(fields: [blood_bank_id], references: [id])
+  patient          User          @relation("PatientBloodRequests", fields: [patientId], references: [id])
+  doctor           User?         @relation("DoctorBloodRequests", fields: [doctorId], references: [id])
+  bloodBank        BloodBank     @relation(fields: [bloodBankId], references: [id])
   
   @@map("blood_requests")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  username      String    @unique
-  email         String    @unique
-  password_hash String
-  role          UserRole  @default(USER)
-  is_active     Boolean   @default(true)
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  username           String    @unique
+  email              String    @unique
+  password_hash      String
+  firstName          String?
+  lastName           String?
+  phone              String?
+  bloodType          BloodType?
+  dateOfBirth        DateTime?
+  address            String?
+  emergencyContact   String?
+  medicalHistory     String?
+  specialization     String?   // For doctors
+  licenseNumber      String?   // For doctors
+  hospitalId         String?   // For doctors
+  role               UserRole  @default(USER)
+  is_active          Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  
+  // Relations
+  hospital           Hospital? @relation(fields: [hospitalId], references: [id])
+  bloodRequests      BloodRequest[] @relation("PatientBloodRequests")
+  doctorBloodRequests BloodRequest[] @relation("DoctorBloodRequests")
   
   @@map("users")
 }
@@ -207,21 +224,27 @@ enum Gender {
 
 enum UrgencyLevel {
   LOW
+  NORMAL
   MEDIUM
   HIGH
   CRITICAL
+  EMERGENCY
 }
 
 enum RequestStatus {
   PENDING
+  IN_PROGRESS
   APPROVED
   REJECTED
+  COMPLETED
   FULFILLED
   CANCELLED
 }
 
 enum UserRole {
   USER
+  PATIENT
+  DOCTOR
   HOSPITAL_ADMIN
   BLOOD_BANK_ADMIN
   SYSTEM_ADMIN

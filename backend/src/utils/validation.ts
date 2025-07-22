@@ -202,6 +202,18 @@ export const loginUserSchema = Joi.object({
   password: Joi.string().required()
 });
 
+export const updateProfileSchema = Joi.object({
+  username: Joi.string().min(3).max(50).alphanum().optional(),
+  email: emailSchema.optional()
+});
+
+export const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required(),
+  newPassword: Joi.string().required().min(8).max(100)
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])'))
+    .message('New password must contain at least one lowercase letter, uppercase letter, number, and special character')
+});
+
 // Query parameter schemas
 export const paginationSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),

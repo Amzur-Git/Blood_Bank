@@ -66,7 +66,7 @@ export class HospitalController {
   /**
    * Get hospital by ID
    */
-  getHospitalById = asyncHandler(async (req: Request, res: Response) => {
+  getHospitalById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
     const hospital = await prisma.hospital.findUnique({
@@ -80,8 +80,7 @@ export class HospitalController {
           where: { is_active: true },
           select: {
             id: true,
-            first_name: true,
-            last_name: true,
+            name: true,
             specialization: true,
             phone: true
           }
@@ -90,10 +89,11 @@ export class HospitalController {
     });
 
     if (!hospital) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Hospital not found'
       });
+      return;
     }
 
     res.json({
@@ -130,7 +130,7 @@ export class HospitalController {
   /**
    * Update hospital
    */
-  updateHospital = asyncHandler(async (req: AuthRequest, res: Response) => {
+  updateHospital = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     const updateData = req.body;
 
@@ -139,10 +139,11 @@ export class HospitalController {
     });
 
     if (!existingHospital) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Hospital not found'
       });
+      return;
     }
 
     const hospital = await prisma.hospital.update({
@@ -168,7 +169,7 @@ export class HospitalController {
   /**
    * Delete hospital
    */
-  deleteHospital = asyncHandler(async (req: AuthRequest, res: Response) => {
+  deleteHospital = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
 
     const hospital = await prisma.hospital.findUnique({
@@ -184,18 +185,20 @@ export class HospitalController {
     });
 
     if (!hospital) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Hospital not found'
       });
+      return;
     }
 
     // Check if hospital has associated blood banks or doctors
     if (hospital._count.blood_banks > 0 || hospital._count.doctors > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Cannot delete hospital with associated blood banks or doctors'
       });
+      return;
     }
 
     await prisma.hospital.delete({ where: { id } });

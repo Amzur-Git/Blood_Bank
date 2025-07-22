@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { logger } from '../config/logger';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import bloodAvailabilityService from '../services/bloodAvailabilityService';
@@ -47,7 +46,7 @@ export class BloodInventoryController {
   /**
    * Update blood inventory
    */
-  updateBloodInventory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  updateBloodInventory = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     const { quantity, cost_per_unit, is_free, expiry_date } = req.body;
 
@@ -58,10 +57,11 @@ export class BloodInventoryController {
     });
 
     if (!existingInventory) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood inventory not found'
       });
+      return;
     }
 
     // Calculate availability status
@@ -107,11 +107,10 @@ export class BloodInventoryController {
       message: 'Blood inventory updated successfully'
     });
   });
-
   /**
    * Create new blood inventory entry
    */
-  createBloodInventory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  createBloodInventory = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { blood_bank_id, blood_type, quantity, cost_per_unit, is_free, expiry_date } = req.body;
 
     // Check if blood bank exists
@@ -120,10 +119,11 @@ export class BloodInventoryController {
     });
 
     if (!bloodBank) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood bank not found'
       });
+      return;
     }
 
     // Check if inventory for this blood type already exists
@@ -137,10 +137,11 @@ export class BloodInventoryController {
     });
 
     if (existingInventory) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Blood inventory for this type already exists. Use update instead.'
       });
+      return;
     }
 
     // Calculate availability status
@@ -186,7 +187,6 @@ export class BloodInventoryController {
       message: 'Blood inventory created successfully'
     });
   });
-
   /**
    * Get blood availability across all blood banks
    */
@@ -212,14 +212,15 @@ export class BloodInventoryController {
   /**
    * Get emergency blood availability (optimized for speed)
    */
-  getEmergencyBloodAvailability = asyncHandler(async (req: Request, res: Response) => {
+  getEmergencyBloodAvailability = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { city_id, blood_type, latitude, longitude } = req.query;
 
     if (!city_id || !blood_type) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'city_id and blood_type are required for emergency search'
       });
+      return;
     }
 
     const availability = await bloodAvailabilityService.getEmergencyBloodAvailability(
@@ -236,7 +237,6 @@ export class BloodInventoryController {
       emergency: true
     });
   });
-
   /**
    * Get blood bank statistics
    */
@@ -268,7 +268,7 @@ export class BloodInventoryController {
   /**
    * Delete blood inventory entry
    */
-  deleteBloodInventory = asyncHandler(async (req: AuthRequest, res: Response) => {
+  deleteBloodInventory = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
 
     const inventory = await prisma.bloodInventory.findUnique({
@@ -277,10 +277,11 @@ export class BloodInventoryController {
     });
 
     if (!inventory) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Blood inventory not found'
       });
+      return;
     }
 
     await prisma.bloodInventory.delete({
@@ -300,7 +301,6 @@ export class BloodInventoryController {
       message: 'Blood inventory deleted successfully'
     });
   });
-
   /**
    * Get expired blood inventory
    */
@@ -379,4 +379,5 @@ export class BloodInventoryController {
   });
 }
 
-export default new BloodInventoryController();
+export const bloodInventoryController = new BloodInventoryController();
+export default bloodInventoryController;

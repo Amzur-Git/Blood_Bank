@@ -4,7 +4,9 @@ import { authMiddleware } from '../middleware/auth';
 import { 
   validateRequest,
   registerUserSchema,
-  loginUserSchema
+  loginUserSchema,
+  updateProfileSchema,
+  changePasswordSchema
 } from '../utils/validation';
 
 const router = express.Router();
@@ -29,11 +31,13 @@ router.get('/profile', authController.getProfile);
 
 router.put(
   '/profile',
+  validateRequest(updateProfileSchema),
   authController.updateProfile
 );
 
 router.post(
   '/change-password',
+  validateRequest(changePasswordSchema),
   authController.changePassword
 );
 

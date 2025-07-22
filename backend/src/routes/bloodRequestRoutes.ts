@@ -1,5 +1,5 @@
 import express from 'express';
-import bloodRequestController from '../controllers/bloodRequestController';
+import { bloodRequestController } from '../controllers/bloodRequestController';
 import { authMiddleware, roleMiddleware } from '../middleware/auth';
 import { 
   validateRequest, 
