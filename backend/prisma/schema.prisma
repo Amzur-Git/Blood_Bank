@@ -1,0 +1,235 @@
+// Emergency Blood Bank System Database Schema
+// This schema defines the complete data model for the blood bank management system
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id           String    @id @default(cuid())
+  name         String
+  state        String
+  country      String    @default("India")
+  latitude     Float?
+  longitude    Float?
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  
+  // Relations
+  hospitals    Hospital[]
+  blood_banks  BloodBank[]
+  
+  @@map("cities")
+}
+
+model Hospital {
+  id                 String    @id @default(cuid())
+  name               String
+  address            String
+  city_id            String
+  phone              String
+  emergency_phone    String?
+  email              String?
+  is_government      Boolean   @default(false)
+  has_blood_bank     Boolean   @default(false)
+  has_emergency_unit Boolean   @default(true)
+  license_number     String?
+  is_active          Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  
+  // Relations
+  city         City         @relation(fields: [city_id], references: [id])
+  blood_banks  BloodBank[]
+  doctors      Doctor[]
+  
+  @@map("hospitals")
+}
+
+model BloodBank {
+  id                String    @id @default(cuid())
+  name              String
+  hospital_id       String?
+  city_id           String
+  address           String
+  phone             String
+  emergency_phone   String?
+  email             String?
+  license_number    String    @unique
+  is_24x7           Boolean   @default(false)
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  // Relations
+  hospital         Hospital?       @relation(fields: [hospital_id], references: [id])
+  city             City            @relation(fields: [city_id], references: [id])
+  blood_inventory  BloodInventory[]
+  blood_requests   BloodRequest[]
+  
+  @@map("blood_banks")
+}
+
+model BloodInventory {
+  id               String    @id @default(cuid())
+  blood_bank_id    String
+  blood_type       BloodType
+  quantity         Int       @default(0)
+  cost_per_unit    Float     @default(0)
+  is_free          Boolean   @default(false)
+  expiry_date      DateTime?
+  last_updated     DateTime  @default(now())
+  updated_by       String?
+  availability_status AvailabilityStatus @default(UNAVAILABLE)
+  
+  // Relations
+  blood_bank       BloodBank @relation(fields: [blood_bank_id], references: [id])
+  
+  @@unique([blood_bank_id, blood_type])
+  @@map("blood_inventory")
+}
+
+model Doctor {
+  id                   String    @id @default(cuid())
+  name                 String
+  hospital_id          String
+  specialization       String
+  registration_number  String    @unique
+  phone                String
+  email                String?
+  is_available         Boolean   @default(true)
+  is_active            Boolean   @default(true)
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  
+  // Relations
+  hospital             Hospital      @relation(fields: [hospital_id], references: [id])
+  blood_requests       BloodRequest[]
+  
+  @@map("doctors")
+}
+
+model Patient {
+  id                String    @id @default(cuid())
+  name              String
+  age               Int
+  gender            Gender
+  blood_type        BloodType
+  phone             String
+  emergency_contact String
+  address           String?
+  medical_history   String?
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  
+  // Relations
+  blood_requests    BloodRequest[]
+  
+  @@map("patients")
+}
+
+model BloodRequest {
+  id               String        @id @default(cuid())
+  patient_id       String
+  doctor_id        String?
+  blood_bank_id    String
+  blood_type       BloodType
+  units_needed     Int
+  urgency_level    UrgencyLevel  @default(MEDIUM)
+  status           RequestStatus @default(PENDING)
+  reason           String
+  requested_at     DateTime      @default(now())
+  approved_at      DateTime?
+  fulfilled_at     DateTime?
+  approved_by      String?
+  notes            String?
+  
+  // Relations
+  patient          Patient       @relation(fields: [patient_id], references: [id])
+  doctor           Doctor?       @relation(fields: [doctor_id], references: [id])
+  blood_bank       BloodBank     @relation(fields: [blood_bank_id], references: [id])
+  
+  @@map("blood_requests")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  password_hash String
+  role          UserRole  @default(USER)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  
+  @@map("users")
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  user_id     String?
+  action      String
+  table_name  String
+  record_id   String
+  old_values  Json?
+  new_values  Json?
+  timestamp   DateTime  @default(now())
+  ip_address  String?
+  user_agent  String?
+  
+  @@map("audit_logs")
+}
+
+// Enums
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+  CANCELLED
+}
+
+enum UserRole {
+  USER
+  HOSPITAL_ADMIN
+  BLOOD_BANK_ADMIN
+  SYSTEM_ADMIN
+}
+
+enum AvailabilityStatus {
+  AVAILABLE     // >10 units
+  LIMITED       // 1-10 units
+  CRITICAL      // <1 unit
+  UNAVAILABLE   // 0 units
+}

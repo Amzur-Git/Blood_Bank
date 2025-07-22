@@ -1,0 +1,53 @@
+{
+  "name": "blood-bank-management-system",
+  "version": "1.0.0",
+  "description": "Emergency Blood Bank Management System - A comprehensive platform for blood donation and management",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "start": "cd backend && npm start",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "setup": "npm run install:all && cd backend && npx prisma generate && npx prisma migrate dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Amzur-Git/Blood_Bank.git"
+  },
+  "keywords": [
+    "blood-bank",
+    "emergency",
+    "healthcare",
+    "blood-donation",
+    "medical",
+    "react",
+    "nodejs",
+    "typescript",
+    "emergency-management",
+    "life-saving"
+  ],
+  "author": "Amzur Technologies",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Amzur-Git/Blood_Bank/issues"
+  },
+  "homepage": "https://github.com/Amzur-Git/Blood_Bank#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}
